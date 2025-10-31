@@ -26,6 +26,7 @@ class User extends Authenticatable implements JWTSubject
         'email',
         'password',
         'permissions',
+        'active',
         'reset_token',
         'created_at',
         'updated_at'
@@ -49,6 +50,7 @@ class User extends Authenticatable implements JWTSubject
      */
     protected $casts = [
        'permissions' => 'array',
+        'active'=>'boolean',
     ];
 
      public function getJWTIdentifier()

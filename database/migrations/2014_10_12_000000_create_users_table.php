@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('username')->unique();
             $table->string('password');
             $table->json('permissions')->nullable();
+            $table->boolean('active')->default(true);
             $table->string('reset_token')->nullable();
             $table->timestamps();
         });

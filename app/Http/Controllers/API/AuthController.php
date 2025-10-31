@@ -82,6 +82,9 @@ class AuthController extends Controller
                 return $this->ReturnError(401, 'Invalid credentials');
             }
 
+            if (isset($user->status) && $user->status !== true) {
+            return $this->ReturnError(403, 'تم تعطيل حسابك الرجاء التواصل مع الادمن');
+            }
 
             $token = JWTAuth::fromUser($user);
 
@@ -201,4 +204,47 @@ class AuthController extends Controller
        $users = User::latest()->paginate(20);
         return $this->ReturnData('users',$users,'done');
     }
+
+    public function toggleUserStatus(Request $request)
+    {
+    try {
+        $authuser = auth()->user();
+        if(!$authuser || !isset($authuser->permissions)){
+            return $this->ReturnError('error','Unauthorized');
+        }
+
+        $permissions = is_string($authuser->permissions) ? json_decode($authuser->permissions, true) : $authuser->permissions;
+
+        $isAdmin = collect($permissions)->contains(function($perm){
+            return isset($perm['role']) && $perm['role'] === 'admin';
+        });
+
+        if (!$isAdmin) {
+            return $this->ReturnError('Error','لا يوجد لديك صلاحيه الاستخدام');
+        }
+
+        $rules = [
+            'user_id' => 'required|exists:users,id',
+            'active' => 'nullable|boolean',
+        ];
+
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            $code = $this->returnCodeAccordingToInput($validator);
+            return $this->returnValidationError($code, $validator);
+        }
+
+        $user = User::find($request->user_id);
+        $user->active = $request->active;
+        $user->save();
+
+        $msg = $request->active === true ? "تم تفعيل المستخدم بنجاح" : "تم تعطيل المستخدم بنجاح";
+
+        return $this->ReturnSuccess('200', $msg);
+
+    } catch (Exception $ex) {
+        return $this->ReturnError($ex->getCode(), $ex->getMessage());
+    }
+}
+
 }

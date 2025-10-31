@@ -20,7 +20,7 @@ class EmployeesController extends Controller
     {
         try
         {
-            $employee=employees::with('user')->latest()->paginate(20);
+            $employee=employees::with(['user','branch'])->latest()->paginate(20);
             return $this->ReturnData('employee',$employee,'Get 20 Employee');
         }
         catch(Exception $ex)
@@ -35,6 +35,7 @@ class EmployeesController extends Controller
         {
             $rules = [
             'user_id' => 'nullable|exists:users,id',
+            'branch_id' => 'required|exists:branches,id',
             'name' => 'required_without:user_id|string',
             'position' => 'nullable|string',
             'phone' => 'required|string',
@@ -49,6 +50,7 @@ class EmployeesController extends Controller
             }
 
              $employee = employees::create([
+                'branch_id'=>$request->branch_id,
                 'user_id' => $request->user_id,
                 'name' => $request->name, // may be null if we created user and want user->name
                 'position' => $request->position,
@@ -67,7 +69,7 @@ class EmployeesController extends Controller
     public function show($id){
         try
         {
-         $employee = employees::with('user','attendances','transactions')->find($id);
+         $employee = employees::with('user','attendances','transactions','branch')->find($id);
         //  $employee = employees::with('user')->find($id);
         if (!$employee) return $this->ReturnError('Error', 'Not found', 404);
         // include display_name
@@ -91,6 +93,7 @@ class EmployeesController extends Controller
             if(!$empolyee) return $this->ReturnError('Error','Not Found ',404);
             $rules = [
             'user_id' => 'nullable|exists:users,id',
+            'branch_id' => 'required|exists:branches,id',
             'name' => 'required_without:user_id|string',
             'position' => 'nullable|string',
             'salary' => 'nullable|numeric',
@@ -106,7 +109,8 @@ class EmployeesController extends Controller
             }
 
              $empolyee->update([
-                 'user_id' => $request->user_id,
+                'branch_id'=>$request->branch_id,
+                'user_id' => $request->user_id,
                 'name' => $request->name,
                 'phone' => $request->phone,
                 'position' => $request->position,

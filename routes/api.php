@@ -43,6 +43,8 @@ Route::prefix('auth')->group(function () {
         Route::post('resetpassword',[AuthController::class, 'resetUserPasswordByAdmin']);
         Route::post('deleteuser',[AuthController::class, 'delete']);
 
+        Route::post('/toggle-user-status', [AuthController::class, 'toggleUserStatus']);
+
     });
 
 
