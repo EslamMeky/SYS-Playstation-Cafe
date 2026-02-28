@@ -3,14 +3,16 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthController;
+use App\Http\Controllers\API\ItemController;
+use App\Http\Controllers\API\OrderController;
+use App\Http\Controllers\API\TableController;
 use App\Http\Controllers\API\BranchController;
+use App\Http\Controllers\API\BookingController;
+use App\Http\Controllers\API\InvoiceController;
+use App\Http\Controllers\API\SessionController;
 use App\Http\Controllers\API\EmployeesController;
 use App\Http\Controllers\API\AttendanceController;
-use App\Http\Controllers\API\BookingController;
-use App\Http\Controllers\API\ItemController;
-use App\Http\Controllers\API\SessionController;
 use App\Http\Controllers\API\SessionItemController;
-use App\Http\Controllers\API\TableController;
 use App\Http\Controllers\API\TransactionController;
 
 /*
@@ -129,7 +131,29 @@ Route::prefix('sessions')->group(function(){
     Route::post('/pause/{id}', [SessionController::class, 'pause']);
     Route::post('/resume/{id}', [SessionController::class, 'resume']);
     Route::post('/end/{id}', [SessionController::class, 'end']);
+    Route::get('/{id}/details', [SessionController::class, 'details']);
+
 
 });
 
+
+Route::prefix('invoices')->group(function(){
+    // Invoice routes
+    Route::get('/', [InvoiceController::class, 'index']);
+    Route::get('/{id}', [InvoiceController::class, 'show']);
+    Route::post('/sessions/{id}/invoice', [InvoiceController::class, 'generateInvoice']);
+    Route::post('/{id}/pay', [InvoiceController::class, 'pay']);
+    Route::post('/{id}', [InvoiceController::class, 'cancel']);
+
+});
+
+Route::prefix('orders')->group(function(){
+    Route::post('/takeaway', [OrderController::class,'createTakeaway']);
+    Route::post('/{order}/items', [OrderController::class,'addItem']);
+    Route::post('/items/{id}', [OrderController::class,'updateItem']);
+    Route::get('/items/{id}', [OrderController::class,'removeItem']);
+    Route::post('/{order}/pay', [OrderController::class,'payOrder']);
+    Route::get('/', [OrderController::class,'index']);
+    Route::get('/{order}', [OrderController::class,'show']);
+});
 

@@ -21,7 +21,7 @@ class Session extends Model
         'status',
         'notes',
         'created_at',
-        'updated_-at'
+        'updated_at'
     ];
 
     public $timestamps=true;
@@ -30,4 +30,9 @@ class Session extends Model
     {
         return $this->belongsTo(Table::class);
     }
+     public function sessionItems()
+    {
+        return $this->hasMany(SessionItem::class, 'session_id');
+    }
+
 }

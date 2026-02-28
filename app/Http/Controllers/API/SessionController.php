@@ -150,4 +150,73 @@ class SessionController extends Controller
 
     }
 
+
+    public function details($id)
+    {
+    try {
+        // eager load table and items
+        $session = Session::with(['table', 'sessionItems.item'])->findOrFail($id);
+
+        // items list with subtotal per item
+        $items = $session->sessionItems->map(function($si){
+            $subtotal = ($si->quantity ?? 0) * ($si->price ?? 0);
+            return [
+                'id' => $si->id,
+                'item_id' => $si->item_id,
+                'item_name' => $si->item->name ?? null,
+                'quantity' => $si->quantity,
+                'price' => (float) $si->price,
+                'subtotal' => (float) $subtotal,
+            ];
+        });
+
+        $itemsTotal = $items->sum('subtotal');
+
+        // session amount: if ended/use saved total_amount, else compute live
+        if ($session->status === 'ended' || !empty($session->total_amount)) {
+            $sessionAmount = (float) ($session->total_amount ?? 0);
+            $hours = (float) ($session->total_hours ?? 0);
+        } else {
+            // ongoing or paused -> compute live hours from start_time
+            $start = Carbon::parse($session->start_time);
+            $now = Carbon::now();
+            $minutes = max(0, $now->diffInMinutes($start));
+            $hours = round($minutes / 60, 2);
+            $pricePerHour = (float) ($session->price_per_hour ?? 0);
+            $sessionAmount = round($hours * $pricePerHour, 2);
+        }
+
+        $grandTotal = round($itemsTotal + $sessionAmount, 2);
+
+        // time info
+        $timeInfo = [
+            'start_time' => $session->start_time,
+            'end_time' => $session->end_time,
+            'hours' => $hours,
+        ];
+
+        $payload = [
+            'session' => [
+                'id' => $session->id,
+                'table_id' => $session->table_id,
+                'table_name' => $session->table->name ?? null,
+                'customer_name' => $session->customer_name,
+                'status' => $session->status,
+                'price_per_hour' => (float) $session->price_per_hour,
+                'session_amount' => (float) $sessionAmount,
+                'items_total' => (float) $itemsTotal,
+                'grand_total' => (float) $grandTotal,
+                'time' => $timeInfo,
+                'notes' => $session->notes,
+                'created_at' => $session->created_at,
+            ],
+            'items' => $items,
+        ];
+
+        return $this->ReturnData('session_details', $payload, 'Session details fetched');
+    } catch (Exception $ex) {
+        return $this->ReturnError($ex->getCode() ?: 500, $ex->getMessage());
+    }
+}
+
 }
